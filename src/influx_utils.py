@@ -1,10 +1,12 @@
 from datetime import timedelta, datetime
 
 
-def create_point(name, tags_dict, time, value):
+def create_point(name, location_tag, time, value):
     return {
         "measurement": name,
-        "tags": tags_dict,
+        "tags": {
+            "location": location_tag
+        },
         "time": time.isoformat(),
         "fields": {
             "value": value
@@ -22,19 +24,46 @@ def create_point_list(name, tags_dict, time, interval_ms, values):
     return points
 
 
+def times_from(now, sensor_board_uptime, measurements_uptimes):
+    return [now - timedelta(sensor_board_uptime - t) for t in measurements_uptimes]
+
+
+def sds_points(sds_json, location_tag, now, sensor_board_uptime):
+    measurements_uptimes = [int(t) for t in sds_json["times"]]
+    times = times_from(now, sensor_board_uptime, measurements_uptimes)
+    pm25_list = [float(pm) for pm in sds_json["pm25"]]
+    pm10_list = [float(pm) for pm in sds_json["pm10"]]
+    zipped = zip(times, pm25_list, pm10_list)
+
+    points = []
+    for time, pm25, pm10 in zipped:
+        points.append(create_point("pm25", location_tag, time, pm25))
+        points.append(create_point("pm10", location_tag, time, pm10))
+
+    return points
+
+
+def dht_points(dht_json, location_tag, now, sensor_board_uptime):
+    measurements_uptimes = [int(t) for t in dht_json["times"]]
+    times = times_from(now, sensor_board_uptime, measurements_uptimes)
+    temperature_list = [float(t) for t in dht_json["temp"]]
+    humidity_list = [float(h) for h in dht_json["hum"]]
+    zipped = zip(times, temperature_list, humidity_list)
+
+    points = []
+    for time, temperature, humidity in zipped:
+        points.append(create_point("temperature", location_tag, time, temperature))
+        points.append(create_point("relative_humidity", location_tag, time, humidity))
+
+    return points
+
+
 def influx_points(json_body):
-    time = datetime.utcnow()
+    now = datetime.utcnow()
+    uptime = int(json_body["uptime"])
 
-    measurements_interval_ms = json_body["interval"]
-    pm25 = json_body["pm25"]
-    pm10 = json_body["pm10"]
-    temperatures = json_body["temp"]
-    relative_humidities = json_body["hum"]
+    location_tag = json_body["tag"]
+    sds = json_body["sds"]
+    dht = json_body["dht"]
 
-    pm25_point = create_point("pm25", {}, time, pm25)
-    pm10_point = create_point("pm10", {}, time, pm10)
-    temperature_points = create_point_list("temperature", {}, time, measurements_interval_ms, temperatures)
-    relative_humidity_points = create_point_list("relative_humidity", {}, time, measurements_interval_ms,
-                                                 relative_humidities)
-
-    return [pm25_point] + [pm10_point] + temperature_points + relative_humidity_points
+    return dht_points(dht, location_tag, now, uptime) + sds_points(sds, location_tag, now, uptime)
