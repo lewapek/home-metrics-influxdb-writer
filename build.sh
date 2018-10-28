@@ -9,14 +9,18 @@ case "${ARCHITECTURE}" in
     "x86_64" )
         echo "Architecture matches 'x86_64'"
         ;;
-    "armv6"  )
-        echo "Architecture matches 'armv6'"
-        VERSION="${VERSION}-arm6"
+    "armv6l" )
+        echo "Architecture matches 'armv6l'"
+        VERSION="${VERSION}-armv6l"
         ;;
-    "armv7"  )
-        echo "Architecture matches 'armv7'"
-        VERSION="${VERSION}-arm7"
-        ''
+    "armv7l" )
+        echo "Architecture matches 'armv7l'"
+        VERSION="${VERSION}-armv7l"
+        ;;
+    "asd"    )
+        echo "Could not match any architecture"
+        exit 1
+        ;;
 esac
 
 echo "Building version ${VERSION}"
