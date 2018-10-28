@@ -5,7 +5,7 @@ from flask import Flask
 from flask import request
 from influxdb import InfluxDBClient
 
-import settings
+from src import settings
 from src.influx_utils import influx_points
 
 app = Flask("collector")

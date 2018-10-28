@@ -14,18 +14,11 @@ def create_point(name, location_tag, time, value):
     }
 
 
-def create_point_list(name, tags_dict, time, interval_ms, values):
-    interval = timedelta(milliseconds=interval_ms)
-    start_time = time - interval * (len(values) - 1)
-    points = []
-    for index, value in enumerate(values):
-        points.append(create_point(name, tags_dict, start_time + index * interval, value))
-
-    return points
-
-
-def times_from(now, sensor_board_uptime, measurements_uptimes):
-    return [now - timedelta(sensor_board_uptime - t) for t in measurements_uptimes]
+def times_from(now, request_uptime, measurements_uptimes):
+    def calculate_time(measurement_uptime):
+        milliseconds_difference = request_uptime - measurement_uptime
+        return now - timedelta(milliseconds=milliseconds_difference)
+    return [calculate_time(t) for t in measurements_uptimes]
 
 
 def sds_points(sds_json, location_tag, now, sensor_board_uptime):
