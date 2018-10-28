@@ -27,5 +27,9 @@ case "${ARCHITECTURE}" in
 esac
 
 echo "Building version ${VERSION}"
-
 docker build -f ${DOCKERFILE_LOCATION} -t lewap/http-to-influx-writer:${VERSION} .
+
+if [ "$1" = "push" ]; then
+    echo "Pushing..."
+    docker push lewap/http-to-influx-writer:${VERSION}
+fi
