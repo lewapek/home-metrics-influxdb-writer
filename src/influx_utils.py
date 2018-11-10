@@ -56,7 +56,8 @@ def influx_points(json_body):
     uptime = int(json_body["uptime"])
 
     location_tag = json_body["tag"]
-    sds = json_body["sds"]
-    dht = json_body["dht"]
 
-    return dht_points(dht, location_tag, now, uptime) + sds_points(sds, location_tag, now, uptime)
+    dht = dht_points(json_body["dht"], location_tag, now, uptime) if "dht" in json_body else []
+    sds = sds_points(json_body["sds"], location_tag, now, uptime) if "sds" in json_body else []
+
+    return dht + sds
